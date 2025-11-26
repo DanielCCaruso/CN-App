@@ -6,7 +6,7 @@ import io
 st.title("Kitchen Checklist – Dynamic Google Sheet")
 
 # === 1) Load Google Sheet dynamically ===
-SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1AbCdEfGhIjKlMnOpQrStUvWxYz12345/export?format=csv"
+SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1HGgv-EE6n3RSgSZxtCblIF51xqu80Y8j0_LORfK4ChU/export?format=csv"
 
 @st.cache_data(ttl=0)   # always re-download unless the user manually refreshes
 def load_sheet():
