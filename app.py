@@ -57,7 +57,6 @@ for _, row in df.iterrows():
         })
 
 # === 3) Render form ===
-# === 3) Render form ===
 st.header("Checklist Form")
 
 output_rows = []
@@ -65,17 +64,18 @@ output_rows = []
 for item, subitems in items.items():
     with st.expander(item, expanded=True):
 
-        # One horizontal row for all sub-items
         cols = st.columns(len(subitems))
 
         for col, entry in zip(cols, subitems):
-            sub = entry["sub"]
 
+            sub = entry["sub"]
             label = sub if sub else item
+            widget_key = f"{item}_{sub if sub else 'main'}"
 
             with col:
                 qty = st.number_input(
                     label,
+                    key=widget_key,
                     min_value=0,
                     value=int(entry["minimum"]) if not pd.isna(entry["minimum"]) else 0,
                     step=1
@@ -86,7 +86,6 @@ for item, subitems in items.items():
                 "Sub-item": sub if sub else "",
                 "Quantity": qty
             })
-
 
 # === 4) Export ===
 st.header("Download Checklist Results")
