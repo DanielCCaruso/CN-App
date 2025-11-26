@@ -62,7 +62,7 @@ st.header("Checklist Form")
 output_rows = []
 
 for item, subitems in items.items():
-    with st.expander(, expanded=True):
+    with st.expander(item, expanded=True):
 
         for entry in subitems:
             sub = entry["sub"]
