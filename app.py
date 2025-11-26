@@ -102,76 +102,78 @@ if prev_col.button("⬅️ Previous section") and st.session_state.section_index
 if next_col.button("➡️ Next section") and st.session_state.section_index < len(section_list) - 1:
     st.session_state.section_index += 1
     st.rerun()
+
+# Finish button (only on last section)
 elif next_col.button("Finish") and st.session_state.section_index == len(section_list) - 1:
     st.success("✅ You’ve completed all sections!")
 
-        # === Export after final section ===
-        output_rows = []
-        for section_name, items_dict in sections.items():
-            for item_name, subentries in items_dict.items():
-                for entry in subentries:
-                    sub = entry["sub"] if entry["sub"] else ""
-                    widget_key = f"{section_name}|{item_name}|{sub if sub else 'main'}"
-                    qty = st.session_state.get(widget_key, 0)
-                    output_rows.append({
-                        "Section": section_name,
-                        "Item": item_name,
-                        "Sub-Item": sub,
-                        "Quantity": qty
-                    })
+    # === Export after final section ===
+    output_rows = []
+    for section_name, items_dict in sections.items():
+        for item_name, subentries in items_dict.items():
+            for entry in subentries:
+                sub = entry["sub"] if entry["sub"] else ""
+                widget_key = f"{section_name}|{item_name}|{sub if sub else 'main'}"
+                qty = st.session_state.get(widget_key, 0)
+                output_rows.append({
+                    "Section": section_name,
+                    "Item": item_name,
+                    "Sub-Item": sub,
+                    "Quantity": qty
+                })
 
-        csv_buffer = io.StringIO()
-        pd.DataFrame(output_rows, columns=["Section", "Item", "Sub-Item", "Quantity"]).to_csv(
-            csv_buffer, index=False
-        )
-        csv_data = csv_buffer.getvalue()
+    csv_buffer = io.StringIO()
+    pd.DataFrame(output_rows, columns=["Section", "Item", "Sub-Item", "Quantity"]).to_csv(
+        csv_buffer, index=False
+    )
+    csv_data = csv_buffer.getvalue()
 
-        st.download_button(
-            label="📥 Download CSV report",
-            data=csv_data,
-            file_name="kitchen_stock_output.csv",
-            mime="text/csv"
-        )
+    st.download_button(
+        label="📥 Download CSV report",
+        data=csv_data,
+        file_name="kitchen_stock_output.csv",
+        mime="text/csv"
+    )
 
-        # === Results summary ===
-        below_min = {}
-        between_min_desired = {}
+    # === Results summary ===
+    below_min = {}
+    between_min_desired = {}
 
-        for section_name, items_dict in sections.items():
-            for item_name, subentries in items_dict.items():
-                for entry in subentries:
-                    sub = entry["sub"] if entry["sub"] else ""
-                    minq = entry["minimum"]
-                    desq = entry["desired"]
+    for section_name, items_dict in sections.items():
+        for item_name, subentries in items_dict.items():
+            for entry in subentries:
+                sub = entry["sub"] if entry["sub"] else ""
+                minq = entry["minimum"]
+                desq = entry["desired"]
 
-                    widget_key = f"{section_name}|{item_name}|{sub if sub else 'main'}"
-                    qty = st.session_state.get(widget_key, 0)
+                widget_key = f"{section_name}|{item_name}|{sub if sub else 'main'}"
+                qty = st.session_state.get(widget_key, 0)
 
-                    if qty < minq:
-                        below_min.setdefault(section_name, []).append((item_name, sub, qty, minq))
-                    elif qty < desq:
-                        between_min_desired.setdefault(section_name, []).append((item_name, sub, qty))
+                if qty < minq:
+                    below_min.setdefault(section_name, []).append((item_name, sub, qty, minq))
+                elif qty < desq:
+                    between_min_desired.setdefault(section_name, []).append((item_name, sub, qty))
 
-        st.header("📉 Items below minimum (red)")
-        for section_name, items_list in below_min.items():
-            st.subheader(section_name)
-            for item_name, sub, qty, minq in items_list:
-                if sub == "":
-                    st.markdown(
-                        f"<span style='color:red'>{item_name}: {qty} (min {minq})</span>",
-                        unsafe_allow_html=True
-                    )
-                else:
-                    st.markdown(
-                        f"<span style='color:red'>{item_name} — {sub}: {qty} (min {minq})</span>",
-                        unsafe_allow_html=True
-                    )
+    st.header("📉 Items below minimum (red)")
+    for section_name, items_list in below_min.items():
+        st.subheader(section_name)
+        for item_name, sub, qty, minq in items_list:
+            if sub == "":
+                st.markdown(
+                    f"<span style='color:red'>{item_name}: {qty} (min {minq})</span>",
+                    unsafe_allow_html=True
+                )
+            else:
+                st.markdown(
+                    f"<span style='color:red'>{item_name} — {sub}: {qty} (min {minq})</span>",
+                    unsafe_allow_html=True
+                )
 
-        st.header("⚠️ Items between minimum and desired")
-        for section_name, items_list in between_min_desired.items():
-            st.subheader(section_name)
-            for item_name, sub, qty in items_list:
-                if sub == "":
-                    st.write(f"{item_name}: {qty}")
-                else:
-                    st.write(f"{item_name} — {sub}: {qty}")
+    st.header("⚠️ Items between minimum and desired")
+    for section_name, items_list in between_min_desired.items():
+        st.subheader(section_name)
+        for item_name, sub, qty in items_list:
+            if sub == "":
+                st.write(f"{item_name}: {qty}")
+            else:
+                st.write(f"{item_name} — {sub}: {qty}")
