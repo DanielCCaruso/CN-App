@@ -11,4 +11,91 @@ SHEET_CSV_URL = "PASTE_YOUR_GOOGLE_SHEET_CSV_URL_HERE"
 @st.cache_data(ttl=0)   # always re-download unless the user manually refreshes
 def load_sheet():
     content = requests.get(SHEET_CSV_URL).content
-    df = pd.read_csv(io.BytesIO(co_
+    df = pd.read_csv(io.BytesIO(content))
+    return df
+
+df = load_sheet()
+
+# REQUIRED COLUMNS:
+# B = Item
+# C = Sub-item
+# D = Minimum
+# E = Desired
+
+# Clean data
+df = df.rename(columns=lambda x: x.strip())  # remove accidental spaces
+
+# Remove NaN sub-items by replacing with empty string
+df["Sub-item"] = df["Sub-item"].fillna("")
+
+st.subheader("Loaded Data")
+st.dataframe(df)
+
+# === 2) Build nested structure ===
+# Group by item
+items = {}
+
+for _, row in df.iterrows():
+    item = row["Item"]
+    sub = row["Sub-item"]
+    minimum = row["Minimum"]
+    desired = row["Desired"]
+
+    if item not in items:
+        items[item] = []
+
+    # Only append sub-items if a sub-item exists
+    if sub.strip() != "":
+        items[item].append({
+            "sub": sub,
+            "minimum": minimum,
+            "desired": desired
+        })
+    else:
+        # Item only (no subitems)
+        items[item].append({
+            "sub": None,
+            "minimum": minimum,
+            "desired": desired
+        })
+
+# === 3) Render form ===
+st.header("Checklist Form")
+
+output_rows = []
+
+for item, subitems in items.items():
+    with st.expander(item):
+
+        for entry in subitems:
+            sub = entry["sub"]
+
+            label = item if sub is None else f"{item} – {sub}"
+
+            qty = st.number_input(
+                label,
+                min_value=0,
+                value=int(entry["minimum"]) if not pd.isna(entry["minimum"]) else 0,
+                step=1
+            )
+
+            output_rows.append({
+                "Item": item,
+                "Sub-item": sub if sub else "",
+                "Quantity": qty
+            })
+
+# === 4) Export ===
+st.header("Download Checklist Results")
+
+output_df = pd.DataFrame(output_rows)
+
+csv = output_df.to_csv(index=False)
+
+st.download_button(
+    "Download CSV",
+    csv,
+    "checklist_output.csv",
+    "text/csv"
+)
+
