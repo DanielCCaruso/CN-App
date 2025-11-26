@@ -45,16 +45,18 @@ st.header(f"Section {st.session_state.section_index+1} of {len(sections)}: {curr
 # Render only the current section
 subitems = items[current_section]
 cols = st.columns(len(subitems))
+
 for col, entry in zip(cols, subitems):
     sub = entry["sub"]
     label = sub if sub else current_section
     widget_key = f"{current_section}_{sub if sub else 'main'}"
+
     with col:
-st.number_input(
-    label,
-    key=widget_key,
-    min_value=0,
-    value=int(entry["minimum"]) if not pd.isna(entry["minimum"]) else 0,
-    step=1
-)
+        st.number_input(
+            label,
+            key=widget_key,
+            min_value=0,
+            value=int(entry["minimum"]) if not pd.isna(entry["minimum"]) else 0,
+            step=1
+        )
 
