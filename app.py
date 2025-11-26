@@ -163,4 +163,15 @@ with next_col:
                     )
                 else:
                     st.markdown(
-                        f"<span style='color:red'>{item_name} — {sub}: {qty} (min {min
+                        f"<span style='color:red'>{item_name} — {sub}: {qty} (min {minq})</span>",
+                        unsafe_allow_html=True
+                    )
+
+        st.header("⚠️ Items between minimum and desired")
+        for section_name, items_list in between_min_desired.items():
+            st.subheader(section_name)
+            for item_name, sub, qty in items_list:
+                if sub == "":
+                    st.write(f"{item_name}: {qty}")
+                else:
+                    st.write(f"{item_name} — {sub}: {qty}")
