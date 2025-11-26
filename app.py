@@ -91,17 +91,17 @@ for item_name, subentries in sections[current_section].items():
                     )
 
 # === Navigation buttons ===
-prev_col, next_col = st.columns([1, 1])
 with prev_col:
     if st.session_state.section_index > 0:
         if st.button("⬅️ Previous section"):
             st.session_state.section_index -= 1
-            st.experimental_rerun()
+            st.rerun()
+
 with next_col:
     if st.session_state.section_index < len(section_list) - 1:
         if st.button("➡️ Next section"):
             st.session_state.section_index += 1
-            st.experimental_rerun()
+            st.rerun()
     else:
         st.success("✅ You’ve completed all sections!")
 
