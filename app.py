@@ -91,19 +91,19 @@ for item_name, subentries in sections[current_section].items():
                     )
 
 # === Navigation buttons ===
-with prev_col:
-    if st.session_state.section_index > 0:
-        if st.button("⬅️ Previous section"):
-            st.session_state.section_index -= 1
-            st.rerun()
+prev_col, next_col = st.columns([1, 1])
 
-with next_col:
-    if st.session_state.section_index < len(section_list) - 1:
-        if st.button("➡️ Next section"):
-            st.session_state.section_index += 1
-            st.rerun()
-    else:
-        st.success("✅ You’ve completed all sections!")
+# Previous button
+if prev_col.button("⬅️ Previous section") and st.session_state.section_index > 0:
+    st.session_state.section_index -= 1
+    st.rerun()
+
+# Next button
+if next_col.button("➡️ Next section") and st.session_state.section_index < len(section_list) - 1:
+    st.session_state.section_index += 1
+    st.rerun()
+elif next_col.button("Finish") and st.session_state.section_index == len(section_list) - 1:
+    st.success("✅ You’ve completed all sections!")
 
         # === Export after final section ===
         output_rows = []
