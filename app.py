@@ -3,7 +3,7 @@ import pandas as pd
 import requests
 import io
 
-st.title("Kitchen Checklist – Dynamic Google Sheet")
+st.title("CN Kitchen Checklist")
 
 # === 1) Load Google Sheet dynamically ===
 SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1HGgv-EE6n3RSgSZxtCblIF51xqu80Y8j0_LORfK4ChU/export?format=csv"
@@ -88,16 +88,36 @@ for item, subitems in items.items():
             })
 
 # === 4) Export ===
-st.header("Download Checklist Results")
+    csv_buffer = io.StringIO()
+    pd.DataFrame(output_rows, columns=["Section", "Item", "SubItem", "Quantity"]).to_csv(
+        csv_buffer, index=False
+    )
+    csv_data = csv_buffer.getvalue()
 
-output_df = pd.DataFrame(output_rows)
+    st.download_button(
+        label="📥 Download CSV Report",
+        data=csv_data,
+        file_name="kitchen_stock_output.csv",
+        mime="text/csv"
+    )
 
-csv = output_df.to_csv(index=False)
+    # Results
+    st.header("📉 Items Below Minimum (Red)")
+    for section, items in below_min.items():
+        st.subheader(section)
+        for item, sub, qty, minq in items:
+            if sub == "":
+                st.markdown(f"<span style='color:red'>{item}: {qty} (min {minq})</span>",
+                            unsafe_allow_html=True)
+            else:
+                st.markdown(f"<span style='color:red'>{item} — {sub}: {qty} (min {minq})</span>",
+                            unsafe_allow_html=True)
 
-st.download_button(
-    "Download CSV",
-    csv,
-    "checklist_output.csv",
-    "text/csv"
-)
-
+    st.header("⚠️ Items Between Minimum and Desired")
+    for section, items in between_min_desired.items():
+        st.subheader(section)
+        for item, sub, qty in items:
+            if sub == "":
+                st.write(f"{item}: {qty}")
+            else:
+                st.write(f"{item} — {sub}: {qty}")
