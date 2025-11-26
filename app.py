@@ -34,7 +34,7 @@ items = {}
 
 for _, row in df.iterrows():
     item = row["Item"]
-    sub = row["Sub-item"]
+    sub = row["Sub-Item"]
     minimum = row["Minimum"]
     desired = row["Desired"]
 
@@ -89,7 +89,7 @@ for item, subitems in items.items():
 
 # === 4) Export ===
     csv_buffer = io.StringIO()
-    pd.DataFrame(output_rows, columns=["Section", "Item", "SubItem", "Quantity"]).to_csv(
+    pd.DataFrame(output_rows, columns=["Section", "Item", "Sub-Item", "Quantity"]).to_csv(
         csv_buffer, index=False
     )
     csv_data = csv_buffer.getvalue()
