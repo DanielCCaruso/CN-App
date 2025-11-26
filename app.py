@@ -120,10 +120,28 @@ for item, subitems in items.items():
         elif qty < desq:
             between_min_desired.setdefault(item, []).append((item, sub, qty))
 
-# Display results
+
+# === 5) Results ===
 st.header("📉 Items Below Minimum (Red)")
 for section, items_list in below_min.items():
     st.subheader(section)
     for item, sub, qty, minq in items_list:
         if sub == "":
-            st.markdown(f"<span style='color:red'>{item}: {qty} (min
+            st.markdown(
+                f"<span style='color:red'>{item}: {qty} (min {minq})</span>",
+                unsafe_allow_html=True
+            )
+        else:
+            st.markdown(
+                f"<span style='color:red'>{item} — {sub}: {qty} (min {minq})</span>",
+                unsafe_allow_html=True
+            )
+
+st.header("⚠️ Items Between Minimum and Desired")
+for section, items_list in between_min_desired.items():
+    st.subheader(section)
+    for item, sub, qty in items_list:
+        if sub == "":
+            st.write(f"{item}: {qty}")
+        else:
+            st.write(f"{item} — {sub}: {qty}")
