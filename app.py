@@ -3,39 +3,64 @@ import pandas as pd
 from collections import defaultdict
 import io
 
-st.set_page_config(page_title="Kitchen Stock Checklist", layout="centered")
+st.set_page_config(page_title="Kitchen Stock Checklist", layout="wide")
 
 # Load Google Sheet CSV directly
 @st.cache_data
 def load_items():
     url = "https://docs.google.com/spreadsheets/d/1HGgv-EE6n3RSgSZxtCblIF51xqu80Y8j0_LORfK4ChU/export?format=csv"
     df = pd.read_csv(url)
-    df.columns = ["Section", "Item", "MinQty", "DesiredQty"]
+    df.columns = ["Section", "Item", "SubItem", "MinQty", "DesiredQty"]
     return df
 
 df = load_items()
 
-st.title("🏡 Kitchen Stock Checklist")
-st.write("Enter the quantities for each item below:")
+st.title("🏡 Kitchen Stock Checklist (Item/Sub-item version)")
 
-sections = df.groupby("Section")
+# Group by section and then by item
+sections = defaultdict(lambda: defaultdict(list))
+
+for _, row in df.iterrows():
+    sections[row["Section"]][row["Item"]].append(row)
+
+# Store user inputs
 inputs = {}
 
 with st.form("stock_form"):
-    for section, items in sections:
-        st.subheader(section)
-        for _, row in items.iterrows():
-            key = f"{section}-{row['Item']}"
-            qty = st.number_input(
-                row["Item"],
-                min_value=0,
-                value=0,
-                key=key
-            )
-            inputs[key] = qty
+    for section, items in sections.items():
+        st.header(section)
+
+        for item_name, rows in items.items():
+            # If no sub-items (all empty)
+            no_subitems = all(pd.isna(r["SubItem"]) or r["SubItem"] == "" for r in rows)
+
+            if no_subitems:
+                # Single item
+                only_row = rows[0]
+                key = f"{section}-{item_name}"
+                inputs[key] = st.number_input(
+                    item_name,
+                    min_value=0,
+                    value=0,
+                    key=key
+                )
+            else:
+                # Sub-items grouped in one line
+                st.subheader(item_name)
+                cols = st.columns(len(rows))
+
+                for col, r in zip(cols, rows):
+                    label = r["SubItem"]
+                    key = f"{section}-{item_name}-{label}"
+                    with col:
+                        inputs[key] = st.number_input(
+                            label,
+                            min_value=0,
+                            value=0,
+                            key=key
+                        )
 
     submitted = st.form_submit_button("Submit")
-
 
 if submitted:
     below_min = defaultdict(list)
@@ -43,20 +68,31 @@ if submitted:
 
     output_rows = []
 
-    # Process inputs
     for _, row in df.iterrows():
-        key = f"{row['Section']}-{row['Item']}"
+        section = row["Section"]
+        item = row["Item"]
+        sub = row["SubItem"]
+        minq = row["MinQty"]
+        desired = row["DesiredQty"]
+
+        # Build input key
+        if pd.isna(sub) or sub == "":
+            key = f"{section}-{item}"
+        else:
+            key = f"{section}-{item}-{sub}"
+
         qty = int(inputs[key])
-        output_rows.append([row["Section"], row["Item"], qty])
+        output_rows.append([section, item, sub if not pd.isna(sub) else "", qty])
 
-        if qty < row["MinQty"]:
-            below_min[row["Section"]].append((row["Item"], qty, row["MinQty"]))
-        elif row["MinQty"] <= qty < row["DesiredQty"]:
-            between_min_desired[row["Section"]].append((row["Item"], qty))
+        # Classification logic
+        if qty < minq:
+            below_min[section].append((item, sub, qty, minq))
+        elif minq <= qty < desired:
+            between_min_desired[section].append((item, sub, qty))
 
-    # CSV output
+    # Generate CSV
     csv_buffer = io.StringIO()
-    pd.DataFrame(output_rows, columns=["Section", "Item", "Quantity"]).to_csv(
+    pd.DataFrame(output_rows, columns=["Section", "Item", "SubItem", "Quantity"]).to_csv(
         csv_buffer, index=False
     )
     csv_data = csv_buffer.getvalue()
@@ -68,18 +104,21 @@ if submitted:
         mime="text/csv"
     )
 
-    # Results
-    st.header("📉 Items Below Minimum")
+    # Display results
+    st.header("📉 Items Below Minimum (Red)")
     for section, items in below_min.items():
         st.subheader(section)
-        for item, qty, minq in items:
-            st.markdown(
-                f"<span style='color:red'>{item}: {qty} (min {minq})</span>",
-                unsafe_allow_html=True
-            )
+        for item, sub, qty, minq in items:
+            if sub and sub != "":
+                st.markdown(f"<span style='color:red'>{item} — {sub}: {qty} (min {minq})</span>", unsafe_allow_html=True)
+            else:
+                st.markdown(f"<span style='color:red'>{item}: {qty} (min {minq})</span>", unsafe_allow_html=True)
 
     st.header("⚠️ Items Between Minimum and Desired")
     for section, items in between_min_desired.items():
         st.subheader(section)
-        for item, qty in items:
-            st.write(f"{item}: {qty}")
+        for item, sub, qty in items:
+            if sub and sub != "":
+                st.write(f"{item} — {sub}: {qty}")
+            else:
+                st.write(f"{item}: {qty}")
