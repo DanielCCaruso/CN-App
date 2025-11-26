@@ -88,36 +88,42 @@ for item, subitems in items.items():
             })
 
 # === 4) Export ===
-    csv_buffer = io.StringIO()
-    pd.DataFrame(output_rows, columns=["Section", "Item", "Sub-Item", "Quantity"]).to_csv(
-        csv_buffer, index=False
-    )
-    csv_data = csv_buffer.getvalue()
+csv_buffer = io.StringIO()
+pd.DataFrame(output_rows, columns=["Item", "Sub-Item", "Quantity"]).to_csv(
+    csv_buffer, index=False
+)
+csv_data = csv_buffer.getvalue()
 
-    st.download_button(
-        label="📥 Download CSV Report",
-        data=csv_data,
-        file_name="kitchen_stock_output.csv",
-        mime="text/csv"
-    )
+st.download_button(
+    label="📥 Download CSV Report",
+    data=csv_data,
+    file_name="kitchen_stock_output.csv",
+    mime="text/csv"
+)
 
-    # Results
-    st.header("📉 Items Below Minimum (Red)")
-    for section, items in below_min.items():
-        st.subheader(section)
-        for item, sub, qty, minq in items:
-            if sub == "":
-                st.markdown(f"<span style='color:red'>{item}: {qty} (min {minq})</span>",
-                            unsafe_allow_html=True)
-            else:
-                st.markdown(f"<span style='color:red'>{item} — {sub}: {qty} (min {minq})</span>",
-                            unsafe_allow_html=True)
+# === 5) Results ===
+below_min = {}
+between_min_desired = {}
 
-    st.header("⚠️ Items Between Minimum and Desired")
-    for section, items in between_min_desired.items():
-        st.subheader(section)
-        for item, sub, qty in items:
-            if sub == "":
-                st.write(f"{item}: {qty}")
-            else:
-                st.write(f"{item} — {sub}: {qty}")
+for item, subitems in items.items():
+    for entry in subitems:
+        sub = entry["sub"] if entry["sub"] else ""
+        minq = entry["minimum"]
+        desq = entry["desired"]
+
+        # Match user input from session_state
+        widget_key = f"{item}_{sub if sub else 'main'}"
+        qty = st.session_state.get(widget_key, 0)
+
+        if qty < minq:
+            below_min.setdefault(item, []).append((item, sub, qty, minq))
+        elif qty < desq:
+            between_min_desired.setdefault(item, []).append((item, sub, qty))
+
+# Display results
+st.header("📉 Items Below Minimum (Red)")
+for section, items_list in below_min.items():
+    st.subheader(section)
+    for item, sub, qty, minq in items_list:
+        if sub == "":
+            st.markdown(f"<span style='color:red'>{item}: {qty} (min
