@@ -26,7 +26,7 @@ df = load_sheet()
 df = df.rename(columns=lambda x: x.strip())  # remove accidental spaces
 
 # Remove NaN sub-items by replacing with empty string
-df["Sub-item"] = df["Sub-item"].fillna("")
+df["Sub-Item"] = df["Sub-Item"].fillna("")
 
 # === 2) Build nested structure ===
 # Group by item
