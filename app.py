@@ -50,8 +50,11 @@ for col, entry in zip(cols, subitems):
     label = sub if sub else current_section
     widget_key = f"{current_section}_{sub if sub else 'main'}"
     with col:
-        st.number_input(
-            label,
-            key=widget_key,
-            min_value=0,
-            value=int(entry["minimum"]) if not pd.isna(entry["minimum"]) else 0,
+st.number_input(
+    label,
+    key=widget_key,
+    min_value=0,
+    value=int(entry["minimum"]) if not pd.isna(entry["minimum"]) else 0,
+    step=1
+)
+
