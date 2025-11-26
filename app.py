@@ -28,9 +28,6 @@ df = df.rename(columns=lambda x: x.strip())  # remove accidental spaces
 # Remove NaN sub-items by replacing with empty string
 df["Sub-item"] = df["Sub-item"].fillna("")
 
-st.subheader("Loaded Data")
-st.dataframe(df)
-
 # === 2) Build nested structure ===
 # Group by item
 items = {}
@@ -65,7 +62,7 @@ st.header("Checklist Form")
 output_rows = []
 
 for item, subitems in items.items():
-    with st.expander(item):
+    with st.expander(, expanded=True):
 
         for entry in subitems:
             sub = entry["sub"]
